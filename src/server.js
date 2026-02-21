@@ -16,6 +16,14 @@ app.use(cookieParser());
 app.use(fileUpload());
 app.use("/car/photos", express.static( path.join(process.cwd(), "uploads", "carPhotos") ));
 
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://5-exam-full.vercel.app/"
+  ],
+  credentials: true,
+}));
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerConfig));
 
 app.use("/api", mainRouter);
