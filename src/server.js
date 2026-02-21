@@ -16,13 +16,37 @@ app.use(cookieParser());
 app.use(fileUpload());
 app.use("/car/photos", express.static( path.join(process.cwd(), "uploads", "carPhotos") ));
 
+// app.use(cors({
+//   origin: [
+//     "http://localhost:5173",
+//     "https://5-exam-full.vercel.app/"
+//   ],
+//   credentials: true,
+// }));
+
+const cors = require("cors");
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://5-exam-full.vercel.app",
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://5-exam-full.vercel.app/"
-  ],
+  origin: function (origin, cb) {
+    // Postman/curl da origin bo'lmaydi -> ruxsat
+    if (!origin) return cb(null, true);
+
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+
+    return cb(new Error("CORS blocked: " + origin), false);
+  },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+// ✅ Preflight requestlarni ham javob qaytaradigan qiling
+app.options("*", cors());
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerConfig));
 
