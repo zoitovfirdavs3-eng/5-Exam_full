@@ -11,31 +11,30 @@ const swaggerConfig = require("./lib/swagger.config");
 dbConnection().catch(() => process.exit(1));
 
 const app = express();
-const cors = require("cors");
-
 const allowedOrigins = [
   "http://localhost:5173",
   "https://5-exam-full.vercel.app",
 ];
 
-const corsOptions = {
-  origin: (origin, cb) => {
-    // postman/curl da origin bo'lmaydi
-    if (!origin) return cb(null, true);
+// ✅ Preflight'ni qo'l bilan yopamiz (eng ishonchli yo'l)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-    if (allowedOrigins.includes(origin)) return cb(null, true);
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  }
 
-    return cb(null, false); // ❗ error qaytarmaymiz
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+  // ✅ OPTIONS bo'lsa shu yerda qaytarib yuboramiz
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
 
-// ✅ CORS eng tepada tursin
-app.use(cors(corsOptions));
-// ✅ Preflight ham shu options bilan javob bersin
-app.options("*", cors(corsOptions));
+  next();
+});
 app.use(express.json());
 app.use(cookieParser());
 app.use(fileUpload());
