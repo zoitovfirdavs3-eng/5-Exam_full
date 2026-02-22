@@ -13,6 +13,7 @@ const {
 const jwtService = require("../lib/jwt.service");
 const logger = require("../lib/winston.service");
 const bcrypt = require("bcrypt");
+const mailerService = require("../lib/mailer.service");
 
 module.exports = {
   async REGISTER(req, res) {
@@ -109,7 +110,7 @@ module.exports = {
       );
       return res.json({ message: "OTP successfully resended" });
     } catch (err) {
-      logger.err(`RESEND_OTP error: ${err.message}`);
+      logger.error(`RESEND_OTP error: ${err.message}`);
       return globalError(err, res);
     }
   },
