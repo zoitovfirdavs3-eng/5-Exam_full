@@ -1,29 +1,31 @@
 const nodemailer = require("nodemailer");
 
-const SMTP_USER = process.env.SMTP_USER || process.env.SMTP_EMAIL;
+const SMTP_EMAIL = process.env.SMTP_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS;
 
-const transport = nodemailer.createTransport({
-  service: "gmail",
-  auth: { user: SMTP_USER, pass: SMTP_PASS },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
+// Gmail SMTP (IPv4 host, 587)
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // 587 uchun false
+  auth: {
+    user: SMTP_EMAIL,
+    pass: SMTP_PASS,
+  },
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
 });
 
-module.exports = async (email, otp) => {
-  if (!SMTP_USER || !SMTP_PASS) {
-    console.log("⚠️ SMTP sozlanmagan: OTP email yuborilmadi.");
-    return;
+module.exports = async function emailService(toEmail, otp) {
+  if (!SMTP_EMAIL || !SMTP_PASS) {
+    throw new Error("SMTP_EMAIL yoki SMTP_PASS yo‘q");
   }
 
-  const html = `... sizning HTML ...`;
-
-  await transport.sendMail({
-    from: `Avto elon uz <${SMTP_USER}>`,
-    to: email,
+  await transporter.sendMail({
+    from: `5-Exam <${SMTP_EMAIL}>`,
+    to: toEmail,
     subject: "OTP tasdiqlash kodi",
-    html,
-    text: `OTP: ${otp}. Ushbu kod faqat 2 daqiqa amal qiladi`,
+    text: `Sizning OTP kodingiz: ${otp}`,
   });
 };

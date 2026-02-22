@@ -11,18 +11,23 @@ module.exports = {
     try {
       logger.debug(`CREATE_CAR attempt with data: ${JSON.stringify(req.body)}`);
       let newCar = req.body;
-      await carValidator.validateAsync(newCar, {abortEarly: false});
+      await carValidator.validateAsync(newCar, { abortEarly: false });
       let findCategory = await CategoryModel.findById(newCar.car_category);
       if (!findCategory) {
         logger.warn(
           `CREATE_CAR request: category not found ${newCar.car_category}`,
         );
         throw new ClientError("Category not found", 404);
-      };
-      if(req.filename) {
-        req.files.car_image.mv( path.join( process.cwd(), "uploads", "carPhotos", req.filename ) )
       }
-      let insertCar = await CarModel.create({...newCar, car_image: req.filename});
+      if (req.filename) {
+        req.files.car_image.mv(
+          path.join(process.cwd(), "uploads", "carPhotos", req.filename),
+        );
+      }
+      let insertCar = await CarModel.create({
+        ...newCar,
+        car_image: req.filename,
+      });
       logger.info(
         `Car successfully created with data: ${JSON.stringify(req.body)}`,
       );
