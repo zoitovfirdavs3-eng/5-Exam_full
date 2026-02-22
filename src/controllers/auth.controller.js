@@ -87,33 +87,50 @@ module.exports = {
       return globalError(err, res);
     }
   },
-  async RESEND_OTP(req, res) {
-    try {
-      logger.debug(`RESEND_OTP attempt: ${JSON.stringify(req.body)}`);
-      let profileData = req.body;
-      await resendOtpOrForgotPasswordValidator.validateAsync(profileData, {
-        abortEarly: false,
-      });
-      let findUser = await UserModel.findOne({ email: profileData.email });
-      if (!findUser || findUser.isVerified) {
-        logger.warn(
-          `RESEND_OTP failed: user not found or already activated (${profileData.email})`,
-        );
-        throw new ClientError("User not found or already activated", 404);
-      }
-      let { otp, otpTime } = otpGenerator();
-      await emailService(profileData.email, otp);
-      logger.info(`Code sent to email ${profileData.email}`);
-      await UserModel.findOneAndUpdate(
-        { email: profileData.email },
-        { otp, otpTime },
+ async RESEND_OTP(req, res) {
+  try {
+    logger.debug(`RESEND_OTP attempt: ${JSON.stringify(req.body)}`);
+
+    const profileData = req.body;
+
+    await resendOtpOrForgotPasswordValidator.validateAsync(profileData, {
+      abortEarly: false,
+    });
+
+    const findUser = await UserModel.findOne({ email: profileData.email });
+
+    // Eslatma: sizning modelda ko‘pincha is_verified bo‘ladi
+    if (!findUser || findUser.is_verified) {
+      logger.warn(
+        `RESEND_OTP failed: user not found or already activated (${profileData.email})`
       );
-      return res.json({ message: "OTP successfully resended" });
-    } catch (err) {
-      logger.error(`RESEND_OTP error: ${err.message}`);
-      return globalError(err, res);
+      throw new ClientError("User not found or already activated", 404);
     }
-  },
+
+    const { otp, otpTime } = otpGenerator();
+
+    // 1) Avval otp ni DB ga yozamiz
+    await UserModel.updateOne(
+      { email: profileData.email },
+      { $set: { otp, otpTime } }
+    );
+
+    // 2) Keyin email yuboramiz (email ketmasa ham server yiqilmasin)
+    try {
+      await emailService(profileData.email, otp);
+      logger.info(`OTP code sent to email ${profileData.email}`);
+    } catch (mailErr) {
+      logger.error(`RESEND_OTP mail error: ${mailErr.message}`);
+      // Email yuborilmadi — bu holatda 500 qaytarish yaxshiroq
+      throw new ClientError("Failed to send OTP email", 500);
+    }
+
+    return res.json({ message: "OTP successfully resended", status: 200 });
+  } catch (err) {
+    logger.error(`RESEND_OTP error: ${err.message}`);
+    return globalError(err, res);
+  }
+}
   async LOGIN(req, res) {
     try {
       logger.debug(`LOGIN attempt: ${req.body.email}`);
