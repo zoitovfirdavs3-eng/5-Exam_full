@@ -12,15 +12,14 @@ const {
 } = require("../utils/validator/user.validator");
 const jwtService = require("../lib/jwt.service");
 const logger = require("../lib/winston.service");
-const bcrypt = require("bcrypt")
-
+const bcrypt = require("bcrypt");
 
 module.exports = {
   async REGISTER(req, res) {
     try {
       logger.debug(`REGISTER attempt with data: ${JSON.stringify(req.body)}`);
       let newUser = req.body;
-      await registerValidator.validateAsync(newUser, {abortEarly: false});
+      await registerValidator.validateAsync(newUser, { abortEarly: false });
       let findUser = await UserModel.findOne({ email: newUser.email });
       if (findUser) {
         logger.warn(`REGISTER failed: email already exists: ${newUser.email}`);
@@ -28,7 +27,16 @@ module.exports = {
       }
       newUser.password = await hash(newUser.password, 10);
       let { otp, otpTime } = otpGenerator();
-      await emailService(newUser.email, otp);
+      try {
+        await mailerService.sendMail({
+          from: process.env.SMTP_FROM,
+          to: profileData.email,
+          subject: "Your OTP Code",
+          text: `Your OTP code is: ${otp}`,
+        });
+      } catch (err) {
+        console.error("Mail failed but user created:", err.message);
+      }
       await UserModel.create({
         ...newUser,
         otp,
@@ -36,8 +44,8 @@ module.exports = {
       });
       logger.info(`Code sent to email ${newUser.email}`);
       return res
-      .status(201)
-      .json({ message: "User successfully registered !", status: 201 });
+        .status(201)
+        .json({ message: "User successfully registered !", status: 201 });
     } catch (err) {
       logger.error(`REGISTER error: ${err.message}`);
       return globalError(err, res);
@@ -47,7 +55,9 @@ module.exports = {
     try {
       logger.debug(`VERIFY request: ${JSON.stringify(req.body)}`);
       let profileData = req.body;
-      await profileVerifiedValidator.validateAsync(profileData, {abortEarly: false});
+      await profileVerifiedValidator.validateAsync(profileData, {
+        abortEarly: false,
+      });
       let findUser = await UserModel.findOne({ email: profileData.email });
       if (!findUser) {
         logger.warn(`VERIFY failed: user not found (${profileData.email})`);
@@ -80,7 +90,9 @@ module.exports = {
     try {
       logger.debug(`RESEND_OTP attempt: ${JSON.stringify(req.body)}`);
       let profileData = req.body;
-      await resendOtpOrForgotPasswordValidator.validateAsync(profileData, {abortEarly: false});
+      await resendOtpOrForgotPasswordValidator.validateAsync(profileData, {
+        abortEarly: false,
+      });
       let findUser = await UserModel.findOne({ email: profileData.email });
       if (!findUser || findUser.isVerified) {
         logger.warn(
@@ -105,7 +117,7 @@ module.exports = {
     try {
       logger.debug(`LOGIN attempt: ${req.body.email}`);
       let profileData = req.body;
-      await loginValidator.validateAsync(profileData, {abortEarly: false});
+      await loginValidator.validateAsync(profileData, { abortEarly: false });
       let findUser = await UserModel.findOne({ email: profileData.email });
       if (!findUser || !findUser.isVerified) {
         logger.warn(
@@ -113,15 +125,24 @@ module.exports = {
         );
         throw new ClientError("User not found or user already activated", 404);
       }
-      
-      const checkPassword = await bcrypt.compare(profileData.password, findUser.password);
-      
+
+      const checkPassword = await bcrypt.compare(
+        profileData.password,
+        findUser.password,
+      );
+
       if (!checkPassword) {
         logger.warn(`LOGIN failed: user not found -> ${profileData.email}`);
         throw new ClientError("User not found", 404);
       }
-      let refreshToken = jwtService.createRefreshToken({sub: findUser._id, role: findUser.role});
-      let accessToken = jwtService.createAccessToken({sub: findUser._id, role: findUser.role});
+      let refreshToken = jwtService.createRefreshToken({
+        sub: findUser._id,
+        role: findUser.role,
+      });
+      let accessToken = jwtService.createAccessToken({
+        sub: findUser._id,
+        role: findUser.role,
+      });
 
       await findUser.updateOne({ refresh_token: refreshToken });
       res.cookie("refresh_token", refreshToken, {
@@ -175,7 +196,9 @@ module.exports = {
     try {
       logger.dubug(`FORGOT_PASSWORD request: ${JSON.stringify(req.body)}`);
       let profileData = req.body;
-      await resendOtpOrForgotPasswordValidator.validateAsync(profileData, {abortEarly: false});
+      await resendOtpOrForgotPasswordValidator.validateAsync(profileData, {
+        abortEarly: false,
+      });
       let findUser = UserModel.findOne({ email: profileData.email });
       if (!findUser || findUser.isVerified) {
         logger.warn(
@@ -200,7 +223,9 @@ module.exports = {
     try {
       logger.debug(`CHANGE_PASSWORD attempt for: ${req.body.email}`);
       let profileData = req.body;
-      await changePasswordValidator.validateAsync(profileData, {abortEarly: false});
+      await changePasswordValidator.validateAsync(profileData, {
+        abortEarly: false,
+      });
       let findUser = UserModel.findOne({ email: profileData.email });
       if (!findUser) {
         logger.warn(
