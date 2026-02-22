@@ -28,16 +28,7 @@ module.exports = {
       }
       newUser.password = await hash(newUser.password, 10);
       let { otp, otpTime } = otpGenerator();
-      try {
-        await mailerService.sendMail({
-          from: process.env.SMTP_FROM,
-          to: profileData.email,
-          subject: "Your OTP Code",
-          text: `Your OTP code is: ${otp}`,
-        });
-      } catch (err) {
-        console.error("Mail failed but user created:", err.message);
-      }
+      await emailService(profileData.email, otp);
       await UserModel.create({
         ...newUser,
         otp,
@@ -100,7 +91,7 @@ module.exports = {
       const findUser = await UserModel.findOne({ email: profileData.email });
 
       // Eslatma: sizning modelda ko‘pincha is_verified bo‘ladi
-      if (!findUser || findUser.is_verified) {
+      if (!findUser || findUser.isVerified) {
         logger.warn(
           `RESEND_OTP failed: user not found or already activated (${profileData.email})`,
         );
@@ -115,15 +106,7 @@ module.exports = {
         { $set: { otp, otpTime } },
       );
 
-      // 2) Keyin email yuboramiz (email ketmasa ham server yiqilmasin)
-      try {
-        await emailService(profileData.email, otp);
-        logger.info(`OTP code sent to email ${profileData.email}`);
-      } catch (mailErr) {
-        logger.error(`RESEND_OTP mail error: ${mailErr.message}`);
-        // Email yuborilmadi — bu holatda 500 qaytarish yaxshiroq
-        throw new ClientError("Failed to send OTP email", 500);
-      }
+      await emailService(profileData.email, otp);
 
       return res.json({ message: "OTP successfully resended", status: 200 });
     } catch (err) {
