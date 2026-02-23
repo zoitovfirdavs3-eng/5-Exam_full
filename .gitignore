@@ -2,3 +2,5 @@
 /node_modules
 /src/logs
 /frontend/node_modules
+logs/
+uploads/
