@@ -83,6 +83,17 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerConfig));
 // ✅ API routes
 app.use("/api", mainRouter);
 
+const logger = require("./lib/winston.service");
+
+app.use((err, req, res, next) => {
+  logger.error(err?.stack || err);
+
+  res.status(err.status || 500).json({
+    status: err.status || 500,
+    message: err.message || "Internal Server Error",
+  });
+});
+
 // ✅ Health check (Render tekshirishi uchun foydali)
 app.get("/", (req, res) => res.send("OK"));
 

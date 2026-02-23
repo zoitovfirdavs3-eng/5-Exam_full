@@ -3,6 +3,7 @@ const UserModel = require("../models/User.model");
 const { hash, compare } = require("bcrypt");
 const otpGenerator = require("../utils/generators/otp.generator");
 const emailService = require("../lib/mailer.service");
+const globalError = require("../lib/global-error");
 const {
   registerValidator,
   loginValidator,
