@@ -5,7 +5,7 @@ const { v4 } = require("uuid");
 
 module.exports = (req, res, next) => {
     const allowedFormats = ['.png', '.jpg', '.jpeg'];
-    const allowedFileSize = 5;
+    const allowedFileSize = 10;
     try{
         if(!req.files) return next();
         let carImage = req.files?.car_image;
