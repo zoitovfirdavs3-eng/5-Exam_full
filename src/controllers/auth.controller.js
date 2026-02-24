@@ -1,4 +1,4 @@
-const { ClientError } = require("shokhijakhon-error-handler");
+const { ClientError, globalError } = require("shokhijakhon-error-handler");
 const bcrypt = require("bcrypt");
 
 const UserModel = require("../models/User.model");
@@ -13,7 +13,6 @@ const {
   resendOtpOrForgotPasswordValidator,
   changePasswordValidator,
 } = require("../utils/validator/user.validator");
-const globalError = require("../lib/global-error");
 
 module.exports = {
   async REGISTER(req, res) {

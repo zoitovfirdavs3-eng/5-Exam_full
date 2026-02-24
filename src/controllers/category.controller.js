@@ -1,12 +1,10 @@
-const { ClientError } = require("shokhijakhon-error-handler");
+const { ClientError, globalError } = require("shokhijakhon-error-handler");
 const { isValidObjectId } = require("mongoose");
 
 const CategoryModel = require("../models/Category.model");
 const CarModel = require("../models/Car.model");
 const createCategoryValidator = require("../utils/validator/category.validator");
-const globalError = require("../lib/global-error");
 const logger = require("../lib/winston.service");
-const globalError = require("../lib/global-error");
 
 async function findCategoryByParam(idParam) {
   // ObjectId bo'lsa
