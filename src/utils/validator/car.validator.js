@@ -7,16 +7,17 @@ const carValidator = Joi.object({
     "any.required": "Car name is required !",
   }),
 
-  car_category: Joi.string().required().messages({
-    "string.base": "Car category must be a string !",
-    "string.empty": "Car category is required !",
-    "any.required": "Car category is required !",
-  }),
+  car_category: Joi.alternatives()
+    .try(Joi.string().trim(), Joi.number().integer())
+    .required()
+    .messages({
+      "any.required": "Car category is required !",
+      "alternatives.match": "Car category must be ObjectId yoki number !",
+    }),
 
-  car_tonirovka: Joi.string().lowercase().valid("bor", "yo'q").messages({
+  car_tonirovka: Joi.string().lowercase().valid("bor", "yo'q").optional().messages({
     "string.base": "Car tonirovka must be a string !",
     "any.only": "Car tonirovka must be either 'bor' or 'yoq' !",
-    "any.required": "Car tonirovka is required !",
   }),
 
   car_motor: Joi.string().trim().required().messages({
@@ -42,7 +43,12 @@ const carValidator = Joi.object({
     "any.required": "Car distance is required !",
   }),
 
-  car_gearbook: Joi.string().lowercase().valid("avtomat", "mexanik").trim().messages({
+  car_gearbook: Joi.string()
+    .lowercase()
+    .valid("avtomat", "mexanik")
+    .trim()
+    .optional()
+    .messages({
     "string.base": "Car gearbox must be a string !",
   }),
 
@@ -58,7 +64,7 @@ const carValidator = Joi.object({
     "any.required": "Car price is required !",
   }),
 
-  car_image: Joi.string().messages({
+  car_image: Joi.string().optional().messages({
     "string.base": "Car image must be a string (URL) !",
   }),
 });

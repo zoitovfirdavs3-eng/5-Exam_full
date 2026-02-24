@@ -273,7 +273,10 @@ export default function Cars() {
               {cars.map((c) => {
                 const id = c._id;
                 const catName = c?.car_category?.category_name || "—";
-                const photo = c?.car_image ? `/car/photos/${c.car_image}` : "";
+                // car_image endi Cloudinary URL bo'ladi. Eski data bo'lsa (filename) — /car/photos/ bilan ham ishlaydi.
+                const photo = c?.car_image
+                  ? (String(c.car_image).startsWith("http") ? c.car_image : `/car/photos/${c.car_image}`)
+                  : "";
                 const editing = editId === id;
 
                 return (

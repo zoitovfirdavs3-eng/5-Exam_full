@@ -2,6 +2,13 @@ const { Schema, model } = require("mongoose");
 
 const categorySchema = new Schema(
   {
+    // Eski DB'larda car_category int bo'lib ketgan bo'lishi mumkin.
+    // Shuning uchun category_id (raqam) ni ham qo'llab-quvvatlaymiz.
+    category_id: {
+      type: Number,
+      unique: true,
+      sparse: true,
+    },
     category_name: {
       type: String,
       required: [true, "Category name is required !"],

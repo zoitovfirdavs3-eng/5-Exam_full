@@ -7,8 +7,9 @@ const carSchema = new Schema(
       required: [true, "Car name is required !"],
     },
     car_category: {
-      type: Schema.Types.ObjectId,
-      ref: "categories",
+      // Ba'zi DB'larda bu maydon int bo'lib ketgan (exam jarayonida).
+      // Shuning uchun Mixed qilib, ObjectId yoki Number qabul qilamiz.
+      type: Schema.Types.Mixed,
       required: [true, "Car category is required"],
     },
     car_tonirovka: {

@@ -25,7 +25,11 @@ const transport = nodemailer.createTransport({
 
 const emailService = async (email, otp) => {
   if (!SMTP_EMAIL || !SMTP_PASS) {
-    throw new Error("SMTP_EMAIL yoki SMTP_PASS yo‘q (Render Environment’da tekshiring)");
+    // Lokal testlarda SMTP bo'lmasa ham auth flow ishlashi uchun
+    // OTP ni terminalga chiqaramiz (prod'da env to'ldirilsa email ketadi)
+    // eslint-disable-next-line no-console
+    console.log(`\n[OTP DEV MODE] Email: ${email} | OTP: ${otp}\n`);
+    return;
   }
 
   const html = `<!doctype html>

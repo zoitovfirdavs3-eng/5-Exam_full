@@ -4,7 +4,6 @@ dns.setDefaultResultOrder("ipv4first");
 const path = require("path");
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const fileUpload = require("express-fileupload");
 const swaggerUi = require("swagger-ui-express");
 
 const mainRouter = require("./router/main.routes");
@@ -64,14 +63,10 @@ app.use((req, res, next) => {
 // ✅ Body parsers va boshqa middlewarelar
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  fileUpload({
-    useTempFiles: false,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  })
-);
 
-// ✅ Static files
+// ❗️Rasm upload endi Cloudinary orqali bo'ladi (diskga yozilmaydi)
+
+// (ixtiyoriy) Eski data/localki rasmlar uchun static qoldiramiz
 app.use(
   "/car/photos",
   express.static(path.join(process.cwd(), "uploads", "carPhotos"))
