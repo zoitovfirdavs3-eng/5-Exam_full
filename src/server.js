@@ -92,5 +92,8 @@ app.use((err, req, res, next) => {
 // ✅ Health check (Render tekshirishi uchun foydali)
 app.get("/", (req, res) => res.send("OK"));
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server is running on ${PORT}-port`));
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on ${PORT}-port`);
+});
