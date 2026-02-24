@@ -5,7 +5,9 @@ import { getRole } from "../lib/auth";
 function Field({ label, children }) {
   return (
     <div style={{ display: "grid", gap: 6 }}>
-      <div className="muted" style={{ fontSize: 12 }}>{label}</div>
+      <div className="muted" style={{ fontSize: 12 }}>
+        {label}
+      </div>
       {children}
     </div>
   );
@@ -40,6 +42,7 @@ export default function Cars() {
   const [editId, setEditId] = useState(null);
   const [edit, setEdit] = useState({
     car_name: "",
+    car_category: "",
     car_tonirovka: "yo'q",
     car_motor: "",
     car_year: 2016,
@@ -59,7 +62,8 @@ export default function Cars() {
 
   async function loadAll() {
     setLoading(true);
-    setMsg(""); setOk("");
+    setMsg("");
+    setOk("");
     try {
       const catRes = await api("/api/category/all");
       setCategories(Array.isArray(catRes) ? catRes : []);
@@ -73,7 +77,9 @@ export default function Cars() {
     }
   }
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+    loadAll();
+  }, []);
 
   useEffect(() => {
     if (!form.car_category && catOptions.length) {
@@ -87,7 +93,8 @@ export default function Cars() {
 
   async function createCar(e) {
     e.preventDefault();
-    setMsg(""); setOk("");
+    setMsg("");
+    setOk("");
 
     if (!form.car_name.trim()) return setMsg("car_name majburiy");
     if (!form.car_category) return setMsg("car_category majburiy");
@@ -109,7 +116,7 @@ export default function Cars() {
       fd.append("car_gearbook", form.car_gearbook);
       fd.append("car_description", form.car_description.trim());
       fd.append("car_price", String(Number(form.car_price)));
-      fd.append("car_image", carImage); // ✅ guard shu nomni kutadi
+      fd.append("car_image", carImage);
 
       await api("/api/car/create", { method: "POST", body: fd });
 
@@ -136,21 +143,23 @@ export default function Cars() {
   function startEdit(c) {
     setEditId(c._id);
     setEdit({
-      car_name: c.car_name || "",
-      car_tonirovka: c.car_tonirovka || "yo'q",
-      car_motor: c.car_motor || "",
-      car_year: c.car_year || 2016,
-      car_color: c.car_color || "",
-      car_distance: c.car_distance || 0,
-      car_gearbook: c.car_gearbook || "avtomat",
-      car_description: c.car_description || "",
-      car_price: c.car_price || 0,
+      car_name: c.car_name ?? "",
+      car_category: c.car_category?._id || c.car_category || "",
+      car_tonirovka: c.car_tonirovka ?? "yo'q",
+      car_motor: c.car_motor ?? "",
+      car_year: c.car_year ?? 2016, // ✅ 0 bo‘lsa ham to‘g‘ri ishlaydi
+      car_color: c.car_color ?? "",
+      car_distance: c.car_distance ?? 0,
+      car_gearbook: c.car_gearbook ?? "avtomat",
+      car_description: c.car_description ?? "",
+      car_price: c.car_price ?? 0,
     });
   }
 
   async function saveEdit() {
     if (!editId) return;
-    setMsg(""); setOk("");
+    setMsg("");
+    setOk("");
     try {
       await api(`/api/car/${editId}`, {
         method: "PUT",
@@ -166,7 +175,8 @@ export default function Cars() {
 
   async function delCar(id) {
     if (!confirm("Delete qilinsinmi?")) return;
-    setMsg(""); setOk("");
+    setMsg("");
+    setOk("");
     try {
       await api(`/api/car/${id}`, { method: "DELETE" });
       setOk("✅ Car deleted");
@@ -182,49 +192,98 @@ export default function Cars() {
         <div className="h1">Mashinalar</div>
         <div className="muted">Create: /api/car/create (car_image majburiy)</div>
 
-        <form onSubmit={createCar} style={{ display: "grid", gap: 12, marginTop: 14 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <form
+          onSubmit={createCar}
+          style={{ display: "grid", gap: 12, marginTop: 14 }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+            }}
+          >
             <Field label="car_name (string)">
-              <input className="input" value={form.car_name} onChange={(e)=>setValue("car_name", e.target.value)} placeholder="Masalan: Malibu" />
+              <input
+                className="input"
+                value={form.car_name}
+                onChange={(e) => setValue("car_name", e.target.value)}
+                placeholder="Masalan: Malibu"
+              />
             </Field>
 
             <Field label="car_category (ObjectId) — Category tanlang">
-              <select className="input" value={form.car_category} onChange={(e)=>setValue("car_category", e.target.value)}>
+              <select
+                className="input"
+                value={form.car_category}
+                onChange={(e) => setValue("car_category", e.target.value)}
+              >
                 {!catOptions.length ? (
                   <option value="">Category yo‘q</option>
                 ) : (
-                  catOptions.map((c)=>(
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                  catOptions.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))
                 )}
               </select>
             </Field>
 
             <Field label="car_tonirovka (bor / yo'q)">
-              <select className="input" value={form.car_tonirovka} onChange={(e)=>setValue("car_tonirovka", e.target.value)}>
+              <select
+                className="input"
+                value={form.car_tonirovka}
+                onChange={(e) => setValue("car_tonirovka", e.target.value)}
+              >
                 <option value="yo'q">yo'q</option>
                 <option value="bor">bor</option>
               </select>
             </Field>
 
             <Field label="car_motor (string)">
-              <input className="input" value={form.car_motor} onChange={(e)=>setValue("car_motor", e.target.value)} placeholder="Masalan: 1.6" />
+              <input
+                className="input"
+                value={form.car_motor}
+                onChange={(e) => setValue("car_motor", e.target.value)}
+                placeholder="Masalan: 1.6"
+              />
             </Field>
 
             <Field label="car_year (number)">
-              <input className="input" type="number" value={form.car_year} onChange={(e)=>setValue("car_year", e.target.value)} />
+              <input
+                className="input"
+                type="number"
+                value={form.car_year}
+                onChange={(e) => setValue("car_year", e.target.value)}
+              />
             </Field>
 
             <Field label="car_color (string)">
-              <input className="input" value={form.car_color} onChange={(e)=>setValue("car_color", e.target.value)} placeholder="Masalan: Oq" />
+              <input
+                className="input"
+                value={form.car_color}
+                onChange={(e) => setValue("car_color", e.target.value)}
+                placeholder="Masalan: Oq"
+              />
             </Field>
 
             <Field label="car_distance (number)">
-              <input className="input" type="number" value={form.car_distance} onChange={(e)=>setValue("car_distance", e.target.value)} placeholder="Masalan: 3000" />
+              <input
+                className="input"
+                type="number"
+                value={form.car_distance}
+                onChange={(e) => setValue("car_distance", e.target.value)}
+                placeholder="Masalan: 3000"
+              />
             </Field>
 
             <Field label="car_gearbook (avtomat / mexanik)">
-              <select className="input" value={form.car_gearbook} onChange={(e)=>setValue("car_gearbook", e.target.value)}>
+              <select
+                className="input"
+                value={form.car_gearbook}
+                onChange={(e) => setValue("car_gearbook", e.target.value)}
+              >
                 <option value="avtomat">avtomat</option>
                 <option value="mexanik">mexanik</option>
               </select>
@@ -232,16 +291,37 @@ export default function Cars() {
           </div>
 
           <Field label="car_description (min 10)">
-            <textarea value={form.car_description} onChange={(e)=>setValue("car_description", e.target.value)} placeholder="Tavsif..." />
+            <textarea
+              value={form.car_description}
+              onChange={(e) => setValue("car_description", e.target.value)}
+              placeholder="Tavsif..."
+            />
           </Field>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+            }}
+          >
             <Field label="car_price (number)">
-              <input className="input" type="number" value={form.car_price} onChange={(e)=>setValue("car_price", e.target.value)} placeholder="Masalan: 15000" />
+              <input
+                className="input"
+                type="number"
+                value={form.car_price}
+                onChange={(e) => setValue("car_price", e.target.value)}
+                placeholder="Masalan: 15000"
+              />
             </Field>
 
             <Field label="car_image (file)">
-              <input className="input" type="file" accept="image/*" onChange={(e)=>setCarImage(e.target.files?.[0] || null)} />
+              <input
+                className="input"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setCarImage(e.target.files?.[0] || null)}
+              />
             </Field>
           </div>
 
@@ -272,18 +352,26 @@ export default function Cars() {
             <tbody>
               {cars.map((c) => {
                 const id = c._id;
-                const catName = c?.car_category?.category_name || "—";
-                // car_image endi Cloudinary URL bo'ladi. Eski data bo'lsa (filename) — /car/photos/ bilan ham ishlaydi.
-                const photo = c?.car_image
-                  ? (String(c.car_image).startsWith("http") ? c.car_image : `/car/photos/${c.car_image}`)
-                  : "";
+                const catName =
+                  c?.car_category_name || c?.car_category?.category_name || "—";
+                const photo = c?.car_image || ""; // ✅ Cloudinary URL
                 const editing = editId === id;
 
                 return (
                   <tr key={id}>
                     <td>
                       {photo ? (
-                        <img src={photo} alt="car" style={{ width: 90, height: 60, objectFit: "cover", borderRadius: 12, border: "1px solid #e5e7eb" }} />
+                        <img
+                          src={photo}
+                          alt="car"
+                          style={{
+                            width: 90,
+                            height: 60,
+                            objectFit: "cover",
+                            borderRadius: 12,
+                            border: "1px solid #e5e7eb",
+                          }}
+                        />
                       ) : (
                         <span className="muted">—</span>
                       )}
@@ -291,25 +379,72 @@ export default function Cars() {
 
                     <td>
                       {editing ? (
-                        <input className="input" value={edit.car_name} onChange={(e)=>setEdit((p)=>({...p, car_name:e.target.value}))} />
+                        <input
+                          className="input"
+                          value={edit.car_name}
+                          onChange={(e) =>
+                            setEdit((p) => ({ ...p, car_name: e.target.value }))
+                          }
+                        />
                       ) : (
                         c.car_name
                       )}
                     </td>
 
-                    <td className="muted">{catName}</td>
-
                     <td>
                       {editing ? (
-                        <input className="input" type="number" value={edit.car_year} onChange={(e)=>setEdit((p)=>({...p, car_year:Number(e.target.value)}))} />
+                        <select
+                          className="input"
+                          value={edit.car_category}
+                          onChange={(e) =>
+                            setEdit((p) => ({
+                              ...p,
+                              car_category: e.target.value,
+                            }))
+                          }
+                        >
+                          {catOptions.map((x) => (
+                            <option key={x.id} value={x.id}>
+                              {x.name}
+                            </option>
+                          ))}
+                        </select>
                       ) : (
-                        c.car_year
+                        <span className="muted">{catName}</span>
                       )}
                     </td>
 
                     <td>
                       {editing ? (
-                        <input className="input" type="number" value={edit.car_price} onChange={(e)=>setEdit((p)=>({...p, car_price:Number(e.target.value)}))} />
+                        <input
+                          className="input"
+                          type="number"
+                          value={edit.car_year}
+                          onChange={(e) =>
+                            setEdit((p) => ({
+                              ...p,
+                              car_year: Number(e.target.value),
+                            }))
+                          }
+                        />
+                      ) : (
+                        c.car_year ?? "—"
+                      )}
+                    </td>
+
+                    <td>
+                      {editing ? (
+                        <input
+                          className="input"
+                          type="number"
+                          value={edit.car_price}
+                          onChange={(e) =>
+                            setEdit((p) => ({
+                              ...p,
+                              car_price: Number(e.target.value),
+                            }))
+                          }
+                        />
                       ) : (
                         c.car_price
                       )}
@@ -320,13 +455,37 @@ export default function Cars() {
                         <div className="row">
                           {editing ? (
                             <>
-                              <button className="btn" type="button" onClick={saveEdit}>Save</button>
-                              <button className="btn secondary" type="button" onClick={()=>setEditId(null)}>Cancel</button>
+                              <button
+                                className="btn"
+                                type="button"
+                                onClick={saveEdit}
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="btn secondary"
+                                type="button"
+                                onClick={() => setEditId(null)}
+                              >
+                                Cancel
+                              </button>
                             </>
                           ) : (
                             <>
-                              <button className="btn secondary" type="button" onClick={()=>startEdit(c)}>Edit</button>
-                              <button className="btn secondary" type="button" onClick={()=>delCar(id)}>Delete</button>
+                              <button
+                                className="btn secondary"
+                                type="button"
+                                onClick={() => startEdit(c)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="btn secondary"
+                                type="button"
+                                onClick={() => delCar(id)}
+                              >
+                                Delete
+                              </button>
                             </>
                           )}
                         </div>
@@ -338,7 +497,11 @@ export default function Cars() {
                 );
               })}
               {!cars.length && (
-                <tr><td colSpan="6" className="muted">No cars</td></tr>
+                <tr>
+                  <td colSpan="6" className="muted">
+                    No cars
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
