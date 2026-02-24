@@ -1,6 +1,6 @@
 require("dotenv").config();
 const dns = require("dns");
-dns.setDefaultResultOrder("ipv4first");
+dns.setDefultResultOrder("ipv4first");
 const path = require("path");
 const express = require("express");
 const cookieParser = require("cookie-parser");
