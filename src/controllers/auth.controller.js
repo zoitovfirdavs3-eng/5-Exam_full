@@ -13,6 +13,7 @@ const {
   resendOtpOrForgotPasswordValidator,
   changePasswordValidator,
 } = require("../utils/validator/user.validator");
+const globalError = require("../lib/global-error");
 
 module.exports = {
   async REGISTER(req, res) {
