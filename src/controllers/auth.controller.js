@@ -4,7 +4,6 @@ const bcrypt = require("bcrypt");
 const UserModel = require("../models/User.model");
 const otpGenerator = require("../utils/generators/otp.generator");
 const emailService = require("../lib/mailer.service");
-const globalError = require("../lib/global-error");
 const jwtService = require("../lib/jwt.service");
 const logger = require("../lib/winston.service");
 const {
