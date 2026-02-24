@@ -27,17 +27,10 @@ module.exports = {
 
       const passwordHash = await bcrypt.hash(newUser.password, 10);
       const { otp, otpTime } = otpGenerator();
+      // ✅ OTP email yuboriladi (xato bo‘lsa REGISTER ham xato qaytaradi)
+      await emailService(newUser.email, otp);
 
-      // SMTP sozlanmagan bo'lsa ham REGISTER ishlashi uchun: mail xatosini bloklamaymiz
-      try {
-        await emailService(newUser.email, otp);
-      } catch (mailErr) {
-        logger.warn(
-          `REGISTER mail error (OTP log only): ${mailErr?.message || mailErr}`,
-        );
-      }
-
-      await UserModel.create({
+await UserModel.create({
         ...newUser,
         password: passwordHash,
         otp,
@@ -108,23 +101,23 @@ module.exports = {
 
       const user = await UserModel.findOne({ email: profileData.email });
       if (!user) throw new ClientError("User not found", 404);
-      if (user.isVerified)
-        throw new ClientError("User already activated", 400);
+      if (user.isVerified) throw new ClientError("User already activated", 400);
 
       const { otp, otpTime } = otpGenerator();
-      try {
-        await emailService(profileData.email, otp);
-      } catch (mailErr) {
-        logger.warn(
-          `RESEND_OTP mail error (OTP log only): ${mailErr?.message || mailErr}`,
-        );
-      }
 
-      await UserModel.findOneAndUpdate({ email: profileData.email }, { otp, otpTime });
+      // ✅ 1) avval email yuboramiz
+      await emailService(profileData.email, otp);
+
+      // ✅ 2) email muvaffaqiyatli bo‘lsa keyin DB update
+      await UserModel.findOneAndUpdate(
+        { email: profileData.email },
+        { otp, otpTime },
+        { new: true },
+      );
 
       return res.json({ message: "OTP successfully resent", status: 200 });
     } catch (err) {
-      logger.error(`RESEND_OTP error: ${err.message}`);
+      logger.error(`RESEND_OTP error: ${err?.message || err}`);
       return globalError(err, res);
     }
   },
@@ -172,8 +165,9 @@ module.exports = {
         await adminUser.updateOne({ refresh_token: refreshToken });
         res.cookie("refresh_token", refreshToken, {
           httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
           maxAge: 1000 * 60 * 60 * 24 * 90,
-          sameSite: "lax",
         });
         return res.json({
           message: "Admin successfully logged in",
@@ -201,8 +195,9 @@ module.exports = {
       await user.updateOne({ refresh_token: refreshToken });
       res.cookie("refresh_token", refreshToken, {
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 1000 * 60 * 60 * 24 * 90,
-        sameSite: "lax",
       });
 
       return res.json({
@@ -260,17 +255,14 @@ module.exports = {
 
       const user = await UserModel.findOne({ email: profileData.email });
       if (!user) throw new ClientError("User not found", 404);
-
       const { otp, otpTime } = otpGenerator();
-      try {
-        await emailService(profileData.email, otp);
-      } catch (mailErr) {
-        logger.warn(
-          `FORGOT_PASSWORD mail error (OTP log only): ${mailErr?.message || mailErr}`,
-        );
-      }
+      // ✅ OTP email yuboriladi (xato bo‘lsa endpoint xato qaytaradi)
+      await emailService(profileData.email, otp);
 
-      await UserModel.findOneAndUpdate({ email: profileData.email }, { otp, otpTime });
+await UserModel.findOneAndUpdate(
+        { email: profileData.email },
+        { otp, otpTime },
+      );
 
       return res.json({ message: "OTP sent to email", status: 200 });
     } catch (err) {
