@@ -28,7 +28,14 @@ module.exports = {
       const passwordHash = await bcrypt.hash(newUser.password, 10);
       const { otp, otpTime } = otpGenerator();
       // ✅ OTP email yuboriladi (xato bo‘lsa REGISTER ham xato qaytaradi)
-      await emailService(newUser.email, otp);
+      try {
+        await emailService(newUser.email, otp);
+      } catch (e) {
+        logger.error(
+          `SMTP failed, but continuing register: ${e?.message || e}`,
+        );
+        // exam uchun: email ketmasa ham user yaratilaversin
+      }
 
       await UserModel.create({
         ...newUser,
