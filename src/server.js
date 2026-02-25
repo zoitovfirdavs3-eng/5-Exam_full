@@ -22,6 +22,7 @@ const app = express();
 const allowedOrigins = new Set([
   "http://localhost:5173",
   "https://5-exam-full.vercel.app",
+  "https://firdavs-site.vercel.app",
 ]);
 
 app.use((req, res, next) => {
@@ -33,11 +34,11 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader(
       "Access-Control-Allow-Methods",
-      "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS",
     );
     res.setHeader(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
+      "Content-Type, Authorization",
     );
     res.setHeader("Access-Control-Max-Age", "86400");
     res.setHeader("Access-Control-Expose-Headers", "Set-Cookie");
@@ -52,7 +53,7 @@ app.use(cookieParser());
 
 app.use(
   "/car/photos",
-  express.static(path.join(process.cwd(), "uploads", "carPhotos"))
+  express.static(path.join(process.cwd(), "uploads", "carPhotos")),
 );
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerConfig));

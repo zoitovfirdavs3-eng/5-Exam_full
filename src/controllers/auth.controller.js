@@ -30,7 +30,7 @@ module.exports = {
       // ✅ OTP email yuboriladi (xato bo‘lsa REGISTER ham xato qaytaradi)
       await emailService(newUser.email, otp);
 
-await UserModel.create({
+      await UserModel.create({
         ...newUser,
         password: passwordHash,
         otp,
@@ -259,7 +259,7 @@ await UserModel.create({
       // ✅ OTP email yuboriladi (xato bo‘lsa endpoint xato qaytaradi)
       await emailService(profileData.email, otp);
 
-await UserModel.findOneAndUpdate(
+      await UserModel.findOneAndUpdate(
         { email: profileData.email },
         { otp, otpTime },
       );
@@ -283,10 +283,21 @@ await UserModel.findOneAndUpdate(
       const user = await UserModel.findOne({ email: profileData.email });
       if (!user) throw new ClientError("User not found", 404);
 
+      const now = Date.now();
+
+      if (!user.otpTime || now > user.otpTime) {
+        throw new ClientError("OTP expired", 400);
+      }
+
+      if (Number(profileData.otp) !== Number(user.otp)) {
+        throw new ClientError("OTP invalid", 400);
+      }
+
       const passwordHash = await bcrypt.hash(profileData.new_password, 10);
+
       await UserModel.findOneAndUpdate(
         { email: profileData.email },
-        { password: passwordHash },
+        { password: passwordHash, otp: null, otpTime: null },
       );
 
       return res.json({

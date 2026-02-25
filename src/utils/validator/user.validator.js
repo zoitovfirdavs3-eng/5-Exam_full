@@ -63,6 +63,11 @@ const changePasswordValidator = Joi.object({
     "any.required": "Email is required !",
   }),
 
+  otp: Joi.number().required().messages({
+    "number.base": "OTP must be a number !",
+    "any.required": "OTP is required !",
+  }),
+
   new_password: Joi.string().min(6).required().messages({
     "string.empty": "New password is required !",
     "string.min": "New password must be at least 6 characters !",
