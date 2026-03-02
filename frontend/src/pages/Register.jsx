@@ -1,88 +1,53 @@
-import React, { useState } from "react";
+
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
+import { api } from "../api";
 
 export default function Register() {
   const nav = useNavigate();
-  const [form, setForm] = useState({
-    first_name: "",
-    last_name: "",
-    age: 18,
-    email: "",
-    password: "",
-  });
-  const [msg, setMsg] = useState("");
-  const [ok, setOk] = useState("");
+  const [form, setForm] = React.useState({ first_name:"", last_name:"", age:"18", email:"", password:"" });
+  const [ok, setOk] = React.useState("");
+  const [err, setErr] = React.useState("");
 
-  function setValue(k, v) {
-    setForm((p) => ({ ...p, [k]: v }));
-  }
+  const set = (k,v)=>setForm(s=>({ ...s, [k]:v }));
 
-  async function submit(e) {
+  const submit = async (e) => {
     e.preventDefault();
-    setMsg("");
-    setOk("");
-    try {
-      await api("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          first_name: form.first_name.trim(),
-          last_name: form.last_name.trim(),
-          age: Number(form.age),
-          email: form.email.trim(),
-          password: form.password,
-        }),
-      });
-
-      localStorage.setItem("pendingEmail", form.email.trim());
-      setOk("✅ Kod emailga yuborildi. OTP ni kiriting.");
-      nav("/verify");
-    } catch (err) {
-      setMsg(err.message);
+    setErr(""); setOk("");
+    try{
+      await api.post("/auth/register", { ...form, age: Number(form.age) });
+      setOk("Registered! Now you can login.");
+      setTimeout(()=>nav("/login"), 600);
+    }catch(e2){
+      setErr(e2?.response?.data?.message || "Register failed");
     }
-  }
+  };
 
   return (
-    <div className="authWrap">
-      <div className="authCard">
-        <div className="pill" style={{ marginBottom: 10 }}>Mashina bozori</div>
-        <h1>Register</h1>
+    <div className="grid" style={{ placeItems:"center" }}>
+      <div className="glass card" style={{ width:"min(560px,100%)", padding:22 }}>
+        <h1 className="h1">Register</h1>
+        <div className="muted" style={{ marginBottom:14 }}>Create account to sell cars.</div>
 
-        <form onSubmit={submit} style={{ display: "grid", gap: 12 }}>
-          <div style={{ display: "grid", gap: 6 }}>
-            <div className="muted" style={{ fontSize: 12 }}>first_name (string)</div>
-            <input className="input" value={form.first_name} onChange={(e)=>setValue("first_name", e.target.value)} placeholder="Ism" />
+        <form onSubmit={submit} className="grid" style={{ gap:12 }}>
+          <div className="formgrid">
+            <input className="input" placeholder="First name" value={form.first_name} onChange={(e)=>set("first_name", e.target.value)} />
+            <input className="input" placeholder="Last name" value={form.last_name} onChange={(e)=>set("last_name", e.target.value)} />
           </div>
-
-          <div style={{ display: "grid", gap: 6 }}>
-            <div className="muted" style={{ fontSize: 12 }}>last_name (string)</div>
-            <input className="input" value={form.last_name} onChange={(e)=>setValue("last_name", e.target.value)} placeholder="Familiya" />
+          <div className="formgrid">
+            <input className="input" placeholder="Age" value={form.age} onChange={(e)=>set("age", e.target.value)} />
+            <input className="input" placeholder="Email" value={form.email} onChange={(e)=>set("email", e.target.value)} />
           </div>
-
-          <div style={{ display: "grid", gap: 6 }}>
-            <div className="muted" style={{ fontSize: 12 }}>age (number, 12-100)</div>
-            <input className="input" type="number" value={form.age} onChange={(e)=>setValue("age", e.target.value)} />
-          </div>
-
-          <div style={{ display: "grid", gap: 6 }}>
-            <div className="muted" style={{ fontSize: 12 }}>email (string)</div>
-            <input className="input" value={form.email} onChange={(e)=>setValue("email", e.target.value)} placeholder="example@gmail.com" />
-          </div>
-
-          <div style={{ display: "grid", gap: 6 }}>
-            <div className="muted" style={{ fontSize: 12 }}>password (min 6)</div>
-            <input className="input" type="password" value={form.password} onChange={(e)=>setValue("password", e.target.value)} placeholder="******" />
-          </div>
-
-          <button className="btn" type="submit">Register</button>
-
-          {msg && <div className="error">{msg}</div>}
-          {ok && <div className="ok">{ok}</div>}
-
-          <div className="muted" style={{ fontSize: 13 }}>
-            Account bormi? <Link className="smallLink" to="/login">Login</Link>
-          </div>
+          <input className="input" type="password" placeholder="Password (min 6)" value={form.password} onChange={(e)=>set("password", e.target.value)} />
+          <button className="btn primary" type="submit">Register</button>
         </form>
+
+        {ok ? <div style={{ color:"#b6ffc6", marginTop:10, fontSize:13 }}>{ok}</div> : null}
+        {err ? <div className="notice">{err}</div> : null}
+
+        <div className="muted" style={{ marginTop:14, fontSize:13 }}>
+          Have account? <Link to="/login" style={{ color:"var(--primary)" }}>Login</Link>
+        </div>
       </div>
     </div>
   );

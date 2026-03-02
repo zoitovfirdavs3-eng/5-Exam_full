@@ -1,64 +1,90 @@
+
 import React from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { getRole, logout } from "../lib/auth";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 
-function useTitleFromPath(pathname) {
-  if (pathname.startsWith("/categories")) return "Kategoriyalar";
-  if (pathname.startsWith("/cars")) return "Mashinalar";
-  return "Dashboard";
-}
-
-export default function Layout() {
-  const role = getRole();
-  const loc = useLocation();
+export default function Layout({ user, onLogout, theme, toggleTheme, children }) {
   const nav = useNavigate();
-  const title = useTitleFromPath(loc.pathname);
-
-  function onLogout() {
-    logout();
-    nav("/login");
-  }
+  const isAdmin = (user?.role || "").toLowerCase() === "admin";
 
   return (
     <div className="container">
-      <div className="shell">
-        <aside className="sidebar">
-          <div className="brand">
-            <div className="logo">🚗</div>
-            <div className="title">
-              <b>Mashina bozori</b>
-              <span>Role: {role}</span>
+      <div className="navbar glass">
+        <div className="row">
+          <Link to="/" className="brand">
+            <div className="logo">A</div>
+            <div className="t">
+              <b>Auto Market</b>
+              <span>Real marketplace vibe</span>
             </div>
+          </Link>
+
+          <div className="navlinks">
+            <NavLink to="/" className={({ isActive }) => "pill" + (isActive ? " active" : "")}>
+              Home
+            </NavLink>
+
+            {/* 🔒 Protected links: show ONLY after login */}
+            {user ? (
+              <>
+                <NavLink to="/cars" className={({ isActive }) => "pill" + (isActive ? " active" : "")}>
+                  Cars
+                </NavLink>
+                <NavLink to="/sell" className={({ isActive }) => "pill" + (isActive ? " active" : "")}>
+                  Sell
+                </NavLink>
+
+                {/* ✅ Admin-only */}
+                {isAdmin ? (
+                  <NavLink
+                    to="/dashboard"
+                    className={({ isActive }) => "pill" + (isActive ? " active" : "")}
+                    title="Admin panel (categories & cars)"
+                  >
+                    + Category
+                  </NavLink>
+                ) : null}
+
+                <NavLink to="/wishlist" className={({ isActive }) => "pill" + (isActive ? " active" : "")}>
+                  Wishlist
+                </NavLink>
+                <NavLink to="/chat" className={({ isActive }) => "pill" + (isActive ? " active" : "")}>
+                  Chat
+                </NavLink>
+                <NavLink to="/account" className={({ isActive }) => "pill" + (isActive ? " active" : "")}>
+                  My Account
+                </NavLink>
+                <NavLink to="/my-listings" className={({ isActive }) => "pill" + (isActive ? " active" : "")}>
+                  My listings
+                </NavLink>
+              </>
+            ) : null}
           </div>
 
-          <nav className="menu">
-            <NavLink to="/categories" className={({ isActive }) => (isActive ? "active" : "")}>
-              Categories
-            </NavLink>
-            <NavLink to="/cars" className={({ isActive }) => (isActive ? "active" : "")}>
-              Cars
-            </NavLink>
-          </nav>
-
-          <div className="spacer" />
-
-          <button className="btn ghost" onClick={onLogout}>
-            Logout
-          </button>
-        </aside>
-
-        <main style={{ display: "grid", gap: 14 }}>
-          <div className="topbar">
-            <div className="breadcrumb">
-              <b>{title}</b>
-              <span>Bosh sahifa / {title}</span>
-            </div>
-            <div className="avatar">U</div>
+          <div className="right">
+            {/* Theme Toggle */}
+            <button 
+              className="btn" 
+              onClick={toggleTheme}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+            
+            {user ? (
+              <>
+                <button className="btn" onClick={onLogout}>Logout</button>
+              </>
+            ) : (
+              <>
+                <button className="btn" onClick={() => nav("/login")}>Login</button>
+                <button className="btn primary" onClick={() => nav("/register")}>Register</button>
+              </>
+            )}
           </div>
-
-          <Outlet />
-        </main>
+        </div>
       </div>
+
+      {children}
     </div>
   );
 }
