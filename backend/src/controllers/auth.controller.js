@@ -9,6 +9,7 @@ function setRefreshCookie(res, token) {
     httpOnly: true,
     secure,
     sameSite: secure ? "none" : "lax",
+    path: "/",
     maxAge: 30 * 24 * 60 * 60 * 1000
   });
 }
@@ -168,7 +169,13 @@ exports.logout = async (req, res, next) => {
     if (token) {
       await User.updateOne({ refresh_token: token }, { $set: { refresh_token: null } });
     }
-    res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "none" });
+    const secure = String(process.env.COOKIE_SECURE || "true") === "true";
+    res.clearCookie("refresh_token", { 
+      httpOnly: true, 
+      secure, 
+      sameSite: secure ? "none" : "lax",
+      path: "/"
+    });
     res.json({ status: 200, message: "Logged out" });
   } catch (e) {
     next(e);
