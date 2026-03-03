@@ -41,7 +41,9 @@ export default function Chat({ user }) {
   const loadMessages = React.useCallback(async (convId) => {
     if (!convId) return;
     const r = await api.get(`/chat/${convId}/messages?limit=200`);
-    setMessages(r.data.data || []);
+    // Reverse messages to show newest at bottom (chronological order)
+    const messages = r.data.data || [];
+    setMessages(messages.reverse());
     
     // Auto-scroll to bottom after loading messages
     setTimeout(() => {
@@ -84,6 +86,16 @@ export default function Chat({ user }) {
     if (!activeId) return;
     loadMessages(activeId).catch((e) => setErr(e?.response?.data?.message || "Messages load failed"));
   }, [activeId, loadMessages]);
+
+  // Auto-scroll to bottom when messages change
+  React.useEffect(() => {
+    setTimeout(() => {
+      const messagesContainer = document.querySelector(".chatMessages");
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }, 100);
+  }, [messages]);
 
   // Poll messages (simple, exam-friendly)
   React.useEffect(() => {
