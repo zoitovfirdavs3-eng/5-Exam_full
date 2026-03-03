@@ -72,12 +72,22 @@ function imgUrl(u) {
   const s = String(u);
   if (s.startsWith("http")) return s;
   
-  // Use API_ORIGIN for static files (not API_URL)
-  const apiOrigin = import.meta.env.VITE_API_ORIGIN || "http://localhost:3002";
+  // Use VITE_ASSET_BASE_URL for static files
+  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL || "http://localhost:3000";
   
   // Ensure proper path joining
   const imagePath = s.startsWith("/") ? s : "/" + s;
-  return apiOrigin + imagePath;
+  const fullUrl = assetBaseUrl + imagePath;
+  
+  // Debug logging
+  console.log("🔍 MyAccount Image URL Debug:", {
+    original: u,
+    assetBaseUrl,
+    imagePath,
+    fullUrl
+  });
+  
+  return fullUrl;
 }
 
 // Toast component

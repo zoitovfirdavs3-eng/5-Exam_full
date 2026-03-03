@@ -1,7 +1,7 @@
 // Meta endpoint for frontend to discover API port
 exports.getMeta = async (req, res) => {
   console.log("🔍 Meta endpoint called");
-  const port = Number(process.env.PORT) || 4000;
+  const port = Number(process.env.PORT) || 3000;
   console.log("🔍 PORT from env:", process.env.PORT);
   console.log("🔍 Final port:", port);
   

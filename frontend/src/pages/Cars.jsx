@@ -2,18 +2,29 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
+import CarCard from "../components/CarCard";
 
 function imgUrl(u) {
   if (!u) return "";
   const s = String(u);
   if (s.startsWith("http")) return s;
   
-  // Use API_ORIGIN for static files (not API_URL)
-  const apiOrigin = import.meta.env.VITE_API_ORIGIN || "http://localhost:3002";
+  // Use VITE_ASSET_BASE_URL for static files
+  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL || "http://localhost:3000";
   
   // Ensure proper path joining
   const imagePath = s.startsWith("/") ? s : "/" + s;
-  return apiOrigin + imagePath;
+  const fullUrl = assetBaseUrl + imagePath;
+  
+  // Debug logging
+  console.log("🔍 Image URL Debug:", {
+    original: u,
+    assetBaseUrl,
+    imagePath,
+    fullUrl
+  });
+  
+  return fullUrl;
 }
 
 function money(n){
@@ -100,57 +111,21 @@ export default function Cars({ user, wishlist, toggleWish }) {
         {err ? <div className="notice">{err}</div> : null}
       </div>
 
-      <div className="grid cards">
-        {filtered.map(x => {
-          const wished = wishlist.includes(x._id);
-          return (
-            <div key={x._id} className="glass car">
-              <div className="img">
-                {x.car_image ? (
-                  <img 
-                    src={imgUrl(x.car_image)} 
-                    alt={x.car_name}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
-                    }}
-                  />
-                ) : null}
-                <div className="muted" style={{ display: x.car_image ? 'none' : 'block' }}>No image</div>
-              </div>
-
-              <div className="body">
-                <div className="price">${money(x.car_price)}</div>
-                <div className="title">{x.car_name}</div>
-                <div className="tag">{x?.car_category?.name || "Category"}</div>
-
-                <div className="meta">
-                  <span>📅 {x.car_year}</span>
-                  <span>🛣 {x.car_distance}</span>
-                  <span>⚙ {x.car_gearbook || "-"}</span>
-                </div>
-
-                <div className="actions">
-                  <Link className="btn primary" to={`/cars/${x._id}`}>View details</Link>
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      if (!user) return nav("/login");
-                      toggleWish(x._id);
-                    }}
-                    title={user ? "Wishlist" : "Login to use wishlist"}
-                  >
-                    {wished ? "♥" : "♡"}
-                  </button>
-                </div>
-
-                <div className="muted" style={{ marginTop:10, fontSize:12 }}>
-                  Seller: {x?.owner?.first_name || "User"} • @{(x?.owner?.email || "").split("@")[0]}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <div className="grid cards" style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: '24px',
+        padding: '24px 0'
+      }}>
+        {filtered.map(x => (
+          <CarCard
+            key={x._id}
+            car={x}
+            wishlist={wishlist}
+            toggleWish={toggleWish}
+            user={user}
+          />
+        ))}
       </div>
     </>
   );
