@@ -1,11 +1,11 @@
 import axios from "axios";
 
 // API configuration using VITE environment variable
-const baseURL = import.meta.env.VITE_API_BASE_URL;
+const baseURL = import.meta.env.VITE_API_URL;
 
 console.log("🔍 API Base URL:", baseURL);
 console.log("🌍 Environment:", import.meta.env.MODE);
-console.log("🔗 VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL || "undefined");
+console.log("🔗 VITE_API_URL:", import.meta.env.VITE_API_URL || "undefined");
 
 export const api = axios.create({
   baseURL,
@@ -26,7 +26,7 @@ api.interceptors.request.use(
         hasData: !!config.data,
         withCredentials: config.withCredentials,
         environment: import.meta.env.MODE,
-        viteApiUrl: import.meta.env.VITE_API_BASE_URL || "undefined"
+        viteApiUrl: import.meta.env.VITE_API_URL || "undefined"
       });
     }
     

@@ -80,7 +80,7 @@ export default function Login({ onLogin }) {
         hasPassword: !!password.trim(),
         withCredentials: api.defaults.withCredentials,
         environment: import.meta.env.MODE,
-        viteApiUrl: import.meta.env.VITE_API_BASE_URL || "undefined",
+        viteApiUrl: import.meta.env.VITE_API_URL || "undefined",
         headers: api.defaults.headers
       });
 
