@@ -48,6 +48,8 @@ const origins = (process.env.CORS_ORIGINS || "")
   .filter(Boolean);
 
 console.log("🔍 CORS Origins Loaded:", origins);
+console.log("🔍 NODE_ENV:", process.env.NODE_ENV);
+console.log("🔍 COOKIE_SECURE:", process.env.COOKIE_SECURE);
 
 app.use(
   cors({
@@ -61,7 +63,14 @@ app.use(
       
       // Postman/curl kabi origin bo'lmasa ham ruxsat
       if (!origin) return cb(null, true);
-      if (origins.includes(origin)) return cb(null, true);
+      
+      // EXACT origin matching - no wildcards for production
+      if (origins.includes(origin)) {
+        console.log("✅ CORS: Origin allowed ->", origin);
+        return cb(null, true);
+      }
+      
+      console.log("❌ CORS: Origin NOT allowed ->", origin);
       return cb(new Error("CORS: origin not allowed -> " + origin));
     },
     credentials: true,

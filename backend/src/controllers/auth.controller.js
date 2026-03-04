@@ -13,16 +13,22 @@ function setRefreshCookie(res, token) {
     isProduction,
     cookieSecure: process.env.COOKIE_SECURE,
     secure,
-    sameSite: secure ? "none" : "lax"
+    sameSite: secure ? "none" : "lax",
+    tokenLength: token ? token.length : 0
   });
   
-  res.cookie("refresh_token", token, {
+  // Production cookies for cross-domain
+  const cookieOptions = {
     httpOnly: true,
-    secure,
+    secure: secure, // Production: true, Local: false
     sameSite: secure ? "none" : "lax", // Production: none, Local: lax
     path: "/",
-    maxAge: 30 * 24 * 60 * 60 * 1000
-  });
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  };
+  
+  console.log("🍪 Setting cookie with options:", cookieOptions);
+  
+  res.cookie("refresh_token", token, cookieOptions);
 }
 
 exports.register = async (req, res, next) => {

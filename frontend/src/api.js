@@ -26,7 +26,8 @@ api.interceptors.request.use(
         hasData: !!config.data,
         withCredentials: config.withCredentials,
         environment: import.meta.env.MODE,
-        viteApiUrl: import.meta.env.VITE_API_URL || "undefined"
+        viteApiUrl: import.meta.env.VITE_API_URL || "undefined",
+        headers: config.headers
       });
     }
     
@@ -56,7 +57,8 @@ api.interceptors.response.use(
       console.error("API Response Error:", {
         status: error.response?.status,
         message: error.response?.data?.message,
-        url: error.config?.url
+        url: error.config?.url,
+        baseURL: error.config?.baseURL
       });
     }
 
