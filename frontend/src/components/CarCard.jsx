@@ -9,11 +9,19 @@ function imgUrl(u) {
   if (s.startsWith("http")) return s;
   
   // Use VITE_ASSET_BASE_URL for static files
-  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL || "http://localhost:3000";
+  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL;
   
-  // Ensure proper path joining
   const imagePath = s.startsWith("/") ? s : "/" + s;
   const fullUrl = assetBaseUrl + imagePath;
+  
+  // Debug logging
+  console.log("🔍 CarCard Image Debug:", {
+    original: u,
+    assetBaseUrl,
+    imagePath,
+    fullUrl,
+    hasImage: !!u
+  });
   
   return fullUrl;
 }
@@ -26,14 +34,27 @@ function money(n) {
 export default function CarCard({ car, wishlist, toggleWish, user }) {
   const wished = wishlist.includes(car._id);
 
+  // Debug logging for car data
+  console.log("🔍 CarCard Data Debug:", {
+    carId: car._id,
+    carName: car.car_name,
+    carImage: car.car_image,
+    imageUrl: car.imageUrl,
+    hasImage: !!car.car_image,
+    hasImageUrl: !!car.imageUrl,
+    imageType: typeof car.car_image,
+    imageUrlType: typeof car.imageUrl,
+    allCarKeys: Object.keys(car)
+  });
+
   return (
     <div className={styles["car-card"]}>
       {/* Image Section */}
       <div className={styles["car-card__image-container"]}>
-        {car.car_image ? (
+        {car.imageUrl ? (
           <>
             <img
-              src={imgUrl(car.car_image)}
+              src={car.imageUrl}
               alt={car.car_name}
               className={styles["car-card__image"]}
               loading="lazy"
@@ -80,7 +101,7 @@ export default function CarCard({ car, wishlist, toggleWish, user }) {
         </button>
       </div>
 
-      {/* Content Section */}
+      {/* Content Section - Middle part */}
       <div className={styles["car-card__content"]}>
         {/* Price */}
         <div className={styles["car-card__price"]}>
@@ -97,7 +118,7 @@ export default function CarCard({ car, wishlist, toggleWish, user }) {
           {car?.car_category?.name || "Category"}
         </div>
 
-        {/* Info Row */}
+        {/* Meta Info */}
         <div className={styles["car-card__info"]}>
           <span className={styles["car-card__info-item"]}>
             📅 {car.car_year}
@@ -110,6 +131,19 @@ export default function CarCard({ car, wishlist, toggleWish, user }) {
           </span>
         </div>
 
+        {/* Action Button - In content flow */}
+        <div className={styles["car-card__button-container"]}>
+          <Link 
+            to={`/cars/${car._id}`} 
+            className={styles["car-card__button"]}
+          >
+            View details
+          </Link>
+        </div>
+      </div>
+
+      {/* Footer Section - Always visible at bottom */}
+      <div className={styles["car-card__footer"]}>
         {/* Seller Info */}
         <div className={styles["car-card__seller"]}>
           <span className={styles["car-card__seller-name"]}>
@@ -119,14 +153,6 @@ export default function CarCard({ car, wishlist, toggleWish, user }) {
             @{(car?.owner?.email || "").split("@")[0]}
           </span>
         </div>
-
-        {/* Action Button */}
-        <Link 
-          to={`/cars/${car._id}`} 
-          className={styles["car-card__button"]}
-        >
-          View details
-        </Link>
       </div>
     </div>
   );

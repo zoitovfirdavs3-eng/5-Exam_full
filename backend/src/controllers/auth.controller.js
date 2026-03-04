@@ -4,11 +4,22 @@ const { HttpError } = require("../utils/errors");
 const { signAccess, signRefresh, verifyRefresh } = require("../utils/jwt");
 
 function setRefreshCookie(res, token) {
-  const secure = String(process.env.COOKIE_SECURE || "true") === "true";
+  // Environment-aware cookie settings
+  const isProduction = process.env.NODE_ENV === "production";
+  const secure = isProduction || String(process.env.COOKIE_SECURE || "true") === "true";
+  
+  console.log("🍪 Cookie Settings Debug:", {
+    environment: process.env.NODE_ENV,
+    isProduction,
+    cookieSecure: process.env.COOKIE_SECURE,
+    secure,
+    sameSite: secure ? "none" : "lax"
+  });
+  
   res.cookie("refresh_token", token, {
     httpOnly: true,
     secure,
-    sameSite: secure ? "none" : "lax",
+    sameSite: secure ? "none" : "lax", // Production: none, Local: lax
     path: "/",
     maxAge: 30 * 24 * 60 * 60 * 1000
   });
@@ -169,7 +180,19 @@ exports.logout = async (req, res, next) => {
     if (token) {
       await User.updateOne({ refresh_token: token }, { $set: { refresh_token: null } });
     }
-    const secure = String(process.env.COOKIE_SECURE || "true") === "true";
+    
+    // Environment-aware cookie clearing
+    const isProduction = process.env.NODE_ENV === "production";
+    const secure = isProduction || String(process.env.COOKIE_SECURE || "true") === "true";
+    
+    console.log("🍪 Logout Cookie Debug:", {
+      environment: process.env.NODE_ENV,
+      isProduction,
+      cookieSecure: process.env.COOKIE_SECURE,
+      secure,
+      sameSite: secure ? "none" : "lax"
+    });
+    
     res.clearCookie("refresh_token", { 
       httpOnly: true, 
       secure, 

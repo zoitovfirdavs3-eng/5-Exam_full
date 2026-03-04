@@ -73,21 +73,10 @@ function imgUrl(u) {
   if (s.startsWith("http")) return s;
   
   // Use VITE_ASSET_BASE_URL for static files
-  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL || "http://localhost:3000";
+  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL;
   
-  // Ensure proper path joining
   const imagePath = s.startsWith("/") ? s : "/" + s;
-  const fullUrl = assetBaseUrl + imagePath;
-  
-  // Debug logging
-  console.log("🔍 MyAccount Image URL Debug:", {
-    original: u,
-    assetBaseUrl,
-    imagePath,
-    fullUrl
-  });
-  
-  return fullUrl;
+  return assetBaseUrl + imagePath;
 }
 
 // Toast component

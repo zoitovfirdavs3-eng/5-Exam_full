@@ -1,18 +1,18 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import CarCard from "../components/CarCard";
+import styles from "./Cars.module.css";
 
+// Helper function to build image URLs
 function imgUrl(u) {
   if (!u) return "";
   const s = String(u);
   if (s.startsWith("http")) return s;
   
   // Use VITE_ASSET_BASE_URL for static files
-  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL || "http://localhost:3000";
+  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL;
   
-  // Ensure proper path joining
   const imagePath = s.startsWith("/") ? s : "/" + s;
   const fullUrl = assetBaseUrl + imagePath;
   
@@ -111,12 +111,7 @@ export default function Cars({ user, wishlist, toggleWish }) {
         {err ? <div className="notice">{err}</div> : null}
       </div>
 
-      <div className="grid cards" style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '24px',
-        padding: '24px 0'
-      }}>
+      <div className={styles.gridCards}>
         {filtered.map(x => (
           <CarCard
             key={x._id}

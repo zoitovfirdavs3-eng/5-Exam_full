@@ -10,17 +10,20 @@ const connectDb = require("./utils/db");
 const routes = require("./routes");
 const { notFound, errorHandler } = require("./utils/errors");
 
+// Trust proxy for Render deployment
+const app = express();
+app.set("trust proxy", 1);
+
 // Startup diagnostics
 console.log("🔍 Startup Diagnostics:");
 console.log("  NODE_ENV:", process.env.NODE_ENV);
 console.log("  PORT from env:", process.env.PORT);
 console.log("  CORS_ORIGINS:", process.env.CORS_ORIGINS);
 console.log("  MongoDB URI:", process.env.MONGO_URI ? "✅ Set" : "❌ Missing");
-console.log("  Access Token Key:", process.env.ACCESS_TOKEN_KEY ? "✅ Set" : "❌ Missing");
+console.log("  Public Origin:", process.env.PUBLIC_ORIGIN || "❌ Missing");
+console.log("  Cookie Secure:", process.env.COOKIE_SECURE);
 
-const app = express();
-
-app.set("trust proxy", 1); // render/proxy uchun
+const uploadsPath = path.join(__dirname, "uploads");
 
 app.use(helmet());
 app.use(morgan("dev"));
@@ -29,7 +32,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // static uploads with CORS headers
-const uploadsPath = path.join(__dirname, "..", "uploads");
 console.log("📁 Serving uploads from:", uploadsPath);
 
 // Serve static files with proper CORS headers
@@ -45,13 +47,16 @@ const origins = (process.env.CORS_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
+console.log("🔍 CORS Origins Loaded:", origins);
+
 app.use(
   cors({
     origin: function (origin, cb) {
-      console.log("🔍 CORS Debug:", {
+      console.log("🔍 CORS Request Debug:", {
         origin,
         allowedOrigins: origins,
-        isAllowed: !origin || origins.includes(origin)
+        isAllowed: !origin || origins.includes(origin),
+        credentials: true
       });
       
       // Postman/curl kabi origin bo'lmasa ham ruxsat
@@ -62,7 +67,11 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["Set-Cookie"]
+    exposedHeaders: ["Set-Cookie"],
+    // Important: when credentials: true, origin cannot be "*"
+    // This ensures only specific origins are allowed
+    preflightContinue: true,
+    optionsSuccessStatus: 204
   })
 );
 

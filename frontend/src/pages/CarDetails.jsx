@@ -1,17 +1,16 @@
-
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api";
 
+// Helper function to build image URLs
 function imgUrl(u) {
   if (!u) return "";
   const s = String(u);
   if (s.startsWith("http")) return s;
   
   // Use VITE_ASSET_BASE_URL for static files
-  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL || "http://localhost:3000";
+  const assetBaseUrl = import.meta.env.VITE_ASSET_BASE_URL;
   
-  // Ensure proper path joining
   const imagePath = s.startsWith("/") ? s : "/" + s;
   const fullUrl = assetBaseUrl + imagePath;
   
@@ -20,7 +19,8 @@ function imgUrl(u) {
     original: u,
     assetBaseUrl,
     imagePath,
-    fullUrl
+    fullUrl,
+    hasImage: !!u
   });
   
   return fullUrl;
@@ -56,18 +56,21 @@ export default function CarDetails({ user, wishlist, toggleWish }) {
       <div className="grid" style={{ gridTemplateColumns:"1fr 1.2fr", gap:18 }}>
         <div className="glass" style={{ borderRadius:18, overflow:"hidden", border:"1px solid rgba(255,255,255,.10)" }}>
           <div style={{ height:320, background:"rgba(255,255,255,.04)" }}>
-            {car.car_image ? (
+            {car.imageUrl ? (
               <img 
-                src={imgUrl(car.car_image)} 
+                src={car.imageUrl} 
                 alt={car.car_name} 
                 style={{ width:"100%", height:"100%", objectFit:"cover" }}
                 onError={(e) => {
                   e.target.style.display = 'none';
-                  e.target.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted)">No image</div>';
+                  e.target.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);flex-direction:column"><div style="font-size:48px;margin-bottom:8px;opacity:0.5">📷</div><div style="font-size:14px;opacity:0.7">No image</div></div>';
                 }}
               />
             ) : (
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", color:"var(--muted)" }}>No image</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",color:"var(--muted)",flexDirection:"column"}}>
+                <div style={{fontSize:"48px",marginBottom:"8px",opacity:0.5}}>📷</div>
+                <div style={{fontSize:"14px",opacity:0.7}}>No image</div>
+              </div>
             )}
           </div>
         </div>

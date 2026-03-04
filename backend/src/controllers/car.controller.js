@@ -21,7 +21,19 @@ exports.list = async (req, res, next) => {
       });
     });
 
-    res.json({ status: 200, data });
+    // Add imageUrl field for frontend convenience
+    const carsWithImageUrl = data.map(car => {
+      const carObj = car.toObject();
+      if (car.car_image) {
+        const publicOrigin = process.env.PUBLIC_ORIGIN || `${req.protocol}://${req.get('host')}`;
+        carObj.imageUrl = `${publicOrigin}${car.car_image}`;
+      } else {
+        carObj.imageUrl = null;
+      }
+      return carObj;
+    });
+
+    res.json({ status: 200, data: carsWithImageUrl });
   } catch (e) {
     next(e);
   }
@@ -43,13 +55,23 @@ exports.create = async (req, res, next) => {
       .populate("car_category", "name image")
       .populate("owner", "first_name last_name email role");
     
+    // Add imageUrl field for frontend convenience
+    const carObj = withPop.toObject();
+    if (carObj.car_image) {
+      const publicOrigin = process.env.PUBLIC_ORIGIN || `${req.protocol}://${req.get('host')}`;
+      carObj.imageUrl = `${publicOrigin}${carObj.car_image}`;
+    } else {
+      carObj.imageUrl = null;
+    }
+    
     console.log("🔍 Car Create Response:", {
       carId: created._id,
       carImage: created.car_image,
-      responseImage: withPop.car_image
+      responseImage: withPop.car_image,
+      imageUrl: carObj.imageUrl
     });
     
-    res.status(201).json({ status: 201, data: withPop });
+    res.json({ status: 200, data: carObj });
   } catch (e) {
     next(e);
   }
@@ -78,7 +100,17 @@ exports.update = async (req, res, next) => {
       .populate("car_category", "name image")
       .populate("owner", "first_name last_name email role");
     if (!updated) throw new HttpError(404, "Car not found");
-    res.json({ status: 200, data: updated });
+    
+    // Add imageUrl field for frontend convenience
+    const carObj = updated.toObject();
+    if (carObj.car_image) {
+      const publicOrigin = process.env.PUBLIC_ORIGIN || `${req.protocol}://${req.get('host')}`;
+      carObj.imageUrl = `${publicOrigin}${carObj.car_image}`;
+    } else {
+      carObj.imageUrl = null;
+    }
+    
+    res.json({ status: 200, data: carObj });
   } catch (e) {
     next(e);
   }

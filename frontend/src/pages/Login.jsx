@@ -71,12 +71,17 @@ export default function Login({ onLogin }) {
     setLoading(true);
     
     try {
-      // Debug: Log request details (without password)
-      console.log("🔍 Login Debug:", {
-        url: api.defaults.baseURL + "/auth/login",
+      // Debug: Log full request details
+      console.log("🔍 Login Request Debug:", {
+        baseURL: api.defaults.baseURL,
+        fullURL: api.defaults.baseURL + "/auth/login",
+        method: "POST",
         email: email.trim().toLowerCase(),
         hasPassword: !!password.trim(),
-        withCredentials: api.defaults.withCredentials
+        withCredentials: api.defaults.withCredentials,
+        environment: import.meta.env.MODE,
+        viteApiUrl: import.meta.env.VITE_API_BASE_URL || "undefined",
+        headers: api.defaults.headers
       });
 
       const { data } = await api.post("/auth/login", { 

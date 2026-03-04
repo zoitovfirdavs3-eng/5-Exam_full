@@ -1,9 +1,11 @@
 import axios from "axios";
 
 // API configuration using VITE environment variable
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+const baseURL = import.meta.env.VITE_API_BASE_URL;
 
-console.log(" API Base URL:", baseURL);
+console.log("🔍 API Base URL:", baseURL);
+console.log("🌍 Environment:", import.meta.env.MODE);
+console.log("🔗 VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL || "undefined");
 
 export const api = axios.create({
   baseURL,
@@ -14,6 +16,20 @@ export const api = axios.create({
 // Request interceptor for debugging
 api.interceptors.request.use(
   (config) => {
+    // Debug login requests specifically
+    if (config.url?.includes('/auth/login') || config.url?.includes('/auth/register')) {
+      console.log("🔐 Auth Request Debug:", {
+        method: config.method?.toUpperCase(),
+        url: `${config.baseURL}${config.url}`,
+        baseURL: config.baseURL,
+        fullURL: `${config.baseURL}${config.url}`,
+        hasData: !!config.data,
+        withCredentials: config.withCredentials,
+        environment: import.meta.env.MODE,
+        viteApiUrl: import.meta.env.VITE_API_BASE_URL || "undefined"
+      });
+    }
+    
     // Don't log sensitive data in production
     if (import.meta.env.DEV) {
       console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
