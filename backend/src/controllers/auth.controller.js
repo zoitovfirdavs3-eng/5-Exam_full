@@ -4,47 +4,35 @@ const { HttpError } = require("../utils/errors");
 const { signAccess, signRefresh, verifyRefresh } = require("../utils/jwt");
 
 function setRefreshCookie(res, token) {
-  // Environment-aware cookie settings
-  const isProduction = process.env.NODE_ENV === "production";
-  const secure = isProduction || String(process.env.COOKIE_SECURE || "true") === "true";
-  
-  console.log("🍪 Cookie Settings Debug:", {
-    environment: process.env.NODE_ENV,
-    isProduction,
-    cookieSecure: process.env.COOKIE_SECURE,
+  const secure = String(process.env.COOKIE_SECURE || "true") === "true";
+  res.cookie("refresh_token", token, {
+    httpOnly: true,
     secure,
     sameSite: secure ? "none" : "lax",
-    tokenLength: token ? token.length : 0
+    maxAge: 30 * 24 * 60 * 60 * 1000,
   });
-  
-  // Production cookies for cross-domain
-  const cookieOptions = {
-    httpOnly: true,
-    secure: secure, // Production: true, Local: false
-    sameSite: secure ? "none" : "lax", // Production: none, Local: lax
-    path: "/",
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-  };
-  
-  console.log("🍪 Setting cookie with options:", cookieOptions);
-  
-  res.cookie("refresh_token", token, cookieOptions);
 }
 
 exports.register = async (req, res, next) => {
   try {
     const { first_name, last_name, age, email, password } = req.body;
 
-    const exists = await User.findOne({ email });
-    if (exists) throw new HttpError(409, "Email already exists");
+    const exists = await User.findOne({ email: email.toLowerCase().trim() });
+    if (exists) throw new HttpError(409, "Bu email allaqachon ro'yxatdan o'tgan");
 
     const password_hash = await bcrypt.hash(password, 10);
 
-    // birinchi user admin bo'lib ketsin (xohlasangiz o'chirasiz)
     const count = await User.countDocuments();
     const role = count === 0 ? "admin" : "user";
 
-    const user = await User.create({ first_name, last_name, age, email, password: password_hash, password_hash, role });
+    const user = await User.create({
+      first_name,
+      last_name,
+      age,
+      email: email.toLowerCase().trim(),
+      password: password_hash,
+      role,
+    });
 
     const accessToken = signAccess({ sub: user._id.toString(), role: user.role });
     const refreshToken = signRefresh({ sub: user._id.toString(), role: user.role });
@@ -56,9 +44,16 @@ exports.register = async (req, res, next) => {
 
     res.status(201).json({
       status: 201,
-      message: "Registered",
+      message: "Muvaffaqiyatli ro'yxatdan o'tildi",
       accessToken,
-      user: { id: user._id, first_name, last_name, age, email, role: user.role }
+      user: {
+        id: user._id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        age: user.age,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (e) {
     next(e);
@@ -69,95 +64,41 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Debug: Log request details (without password)
-    console.log("🔍 Backend Login Debug:", {
-      email: email,
-      hasPassword: !!password,
-      emailLength: email?.length,
-      passwordLength: password?.length
-    });
-
-    // Basic validation
     if (!email || !password) {
-      console.log("❌ Missing email or password");
       throw new HttpError(400, "Email va parol kiritilishi shart");
     }
 
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      console.log("❌ Invalid email format");
-      throw new HttpError(400, "Email formati noto'g'ri");
-    }
-
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    console.log("🔍 User lookup result:", {
-      found: !!user,
-      userId: user?._id,
-      hasPassword: !!(user?.password || user?.password_hash)
-    });
-
-    if (!user) {
-      console.log("❌ User not found");
-      throw new HttpError(401, "Email yoki parol noto'g'ri");
-    }
+    if (!user) throw new HttpError(401, "Email yoki parol noto'g'ri");
 
     const hash = user.password || user.password_hash;
-    if (!hash) {
-      console.log("❌ User password not found in DB");
-      throw new HttpError(400, "Foydalanuvchi paroli topilmadi");
-    }
+    if (!hash) throw new HttpError(401, "Email yoki parol noto'g'ri");
 
     const ok = await bcrypt.compare(password, hash);
-    console.log("🔍 Password comparison result:", { isValid: ok });
-
-    if (!ok) {
-      console.log("❌ Password comparison failed");
-      throw new HttpError(401, "Email yoki parol noto'g'ri");
-    }
+    if (!ok) throw new HttpError(401, "Email yoki parol noto'g'ri");
 
     const accessToken = signAccess({ sub: user._id.toString(), role: user.role });
     const refreshToken = signRefresh({ sub: user._id.toString(), role: user.role });
-
-    console.log("✅ Tokens created:", {
-      hasAccessToken: !!accessToken,
-      hasRefreshToken: !!refreshToken,
-      userId: user._id.toString(),
-      role: user.role
-    });
 
     user.refresh_token = refreshToken;
     await user.save();
 
     setRefreshCookie(res, refreshToken);
 
-    const responseData = {
+    res.json({
       status: 200,
       message: "Muvaffaqiyatli kirish",
       accessToken,
-      user: { 
-        id: user._id, 
-        first_name: user.first_name, 
-        last_name: user.last_name, 
-        age: user.age, 
-        email: user.email, 
-        role: user.role 
-      }
-    };
-
-    console.log("✅ Login success, sending response:", {
-      status: responseData.status,
-      hasAccessToken: !!responseData.accessToken,
-      hasUser: !!responseData.user
+      user: {
+        id: user._id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        age: user.age,
+        email: user.email,
+        role: user.role,
+      },
     });
-
-    res.json(responseData);
   } catch (e) {
-    console.error("❌ Backend Login Error:", {
-      message: e.message,
-      status: e.status,
-      stack: e.stack
-    });
     next(e);
   }
 };
@@ -165,16 +106,17 @@ exports.login = async (req, res, next) => {
 exports.refresh = async (req, res, next) => {
   try {
     const token = req.cookies?.refresh_token;
-    if (!token) throw new HttpError(401, "Refresh token missing");
+    if (!token) throw new HttpError(401, "Refresh token topilmadi");
 
     const payload = verifyRefresh(token);
 
     const user = await User.findById(payload.sub);
-    if (!user || user.refresh_token !== token) throw new HttpError(401, "Invalid refresh token");
+    if (!user || user.refresh_token !== token)
+      throw new HttpError(401, "Yaroqsiz refresh token");
 
     const accessToken = signAccess({ sub: user._id.toString(), role: user.role });
 
-    res.json({ status: 200, message: "Refreshed", accessToken });
+    res.json({ status: 200, message: "Yangilandi", accessToken });
   } catch (e) {
     next(e);
   }
@@ -186,26 +128,8 @@ exports.logout = async (req, res, next) => {
     if (token) {
       await User.updateOne({ refresh_token: token }, { $set: { refresh_token: null } });
     }
-    
-    // Environment-aware cookie clearing
-    const isProduction = process.env.NODE_ENV === "production";
-    const secure = isProduction || String(process.env.COOKIE_SECURE || "true") === "true";
-    
-    console.log("🍪 Logout Cookie Debug:", {
-      environment: process.env.NODE_ENV,
-      isProduction,
-      cookieSecure: process.env.COOKIE_SECURE,
-      secure,
-      sameSite: secure ? "none" : "lax"
-    });
-    
-    res.clearCookie("refresh_token", { 
-      httpOnly: true, 
-      secure, 
-      sameSite: secure ? "none" : "lax",
-      path: "/"
-    });
-    res.json({ status: 200, message: "Logged out" });
+    res.clearCookie("refresh_token", { httpOnly: true, secure: true, sameSite: "none" });
+    res.json({ status: 200, message: "Chiqildi" });
   } catch (e) {
     next(e);
   }

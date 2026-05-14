@@ -6,14 +6,18 @@ module.exports = function auth(requiredRole = null) {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
-    if (!token) return next(new HttpError(401, "Authorization token required"));
+    if (!token) return next(new HttpError(401, "Authorization token kerak"));
 
-    const payload = verifyAccess(token);
-    req.user = payload;
+    try {
+      const payload = verifyAccess(token);
+      req.user = payload;
 
-    if (requiredRole && payload.role !== requiredRole) {
-      return next(new HttpError(403, "Forbidden"));
+      if (requiredRole && payload.role !== requiredRole) {
+        return next(new HttpError(403, "Ruxsat yo'q"));
+      }
+      next();
+    } catch (e) {
+      next(e);
     }
-    next();
   };
 };
